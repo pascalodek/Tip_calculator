@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIKit.UIViewController, UITableViewDataSource {
 
     @IBOutlet weak var totalTextField: UITextField!
     
@@ -20,6 +20,10 @@ class ViewController: UIViewController {
     
     let tipCalc = TipCalculatorModel(total: 33.25, taxPct: 0.06)
     
+    var possibleTips = Dictionary<Int, (tipAmt:Double, total:Double)>()
+    var sortedKeys:[Int] = []
+    
+    @IBOutlet weak var tableView: UITableView!
     
     func refreshUI() {
         // 1
@@ -28,8 +32,7 @@ class ViewController: UIViewController {
         taxPctslider.value = Float(tipCalc.taxPct) * 100.0
         // 3
         taxPctLabel.text = "Tax Percentage (\(Int(taxPctslider.value))%)"
-        // 4
-        resultsTextView.text = ""
+        
     }
     
     override func viewDidLoad() {
@@ -44,32 +47,12 @@ class ViewController: UIViewController {
     }
 
     
-    @IBAction func calculateTapped(sender: AnyObject) {
-        
-        
-        // 1
+    @IBAction func calculateTapped(sender : AnyObject) {
         tipCalc.total = Double((totalTextField.text as NSString).doubleValue)
-        // 2
-        let possibleTips = tipCalc.returnPossibleTips()
-        var results = ""
-        // 3
-//        var keys = Array(possibleTips.keys)
-//        sort(&keys)
-//        for tipPct in keys {
-//            let tipValue = possibleTips[tipPct]!
-//            let prettyTipValue = String(format:"%.2f", tipValue)
-//            results += "\(tipPct)%: \(prettyTipValue)\n"
-//        }
-        
-        
-        for (tipPct, tipValue) in possibleTips {
-            // 4
-            results += "\(tipPct)%: \(tipValue)\n"
-        }
-        // 5
-        resultsTextView.text = results
+        possibleTips = tipCalc.returnPossibleTips()
+        sortedKeys = sorted(Array(possibleTips.keys))
+        tableView.reloadData()
     }
-    
     
     @IBAction func taxPercentageChanged(sender: AnyObject) {
         
@@ -82,7 +65,26 @@ class ViewController: UIViewController {
         totalTextField.resignFirstResponder()
     }
     
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return sortedKeys.count
+    }
     
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        // 2
+        let cell = UITableViewCell(style: UITableViewCellStyle.Value2, reuseIdentifier: nil)
+        
+        // 3
+        let tipPct = sortedKeys[indexPath.row]
+        // 4
+        let tipAmt = possibleTips[tipPct]!.tipAmt
+        let total = possibleTips[tipPct]!.total
+        
+        // 5
+        cell.textLabel?.text = "\(tipPct)%:"
+        cell.detailTextLabel?.text = String(format:"Tip: $%0.2f, Total: $%0.2f", tipAmt, total)
+        return cell
+    }
+
     
 }
 
